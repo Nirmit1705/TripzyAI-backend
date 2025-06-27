@@ -230,6 +230,153 @@ class MapService {
   getTileServerUrl() {
     return this.tileServer;
   }
+
+  // Plan optimal route for multiple destinations
+  async planMultiDestinationRoute(initialLocation, destinations) {
+    try {
+      const allLocations = [initialLocation, ...destinations];
+      const routeMatrix = [];
+      
+      // Calculate distances between all locations
+      for (let i = 0; i < allLocations.length; i++) {
+        routeMatrix[i] = [];
+        for (let j = 0; j < allLocations.length; j++) {
+          if (i === j) {
+            routeMatrix[i][j] = 0;
+          } else {
+            const distance = this.calculateDistance(
+              allLocations[i].coordinates.lat,
+              allLocations[i].coordinates.lon,
+              allLocations[j].coordinates.lat,
+              allLocations[j].coordinates.lon
+            );
+            routeMatrix[i][j] = distance;
+          }
+        }
+      }
+
+      // Simple nearest neighbor algorithm for route optimization
+      const optimizedRoute = this.optimizeRoute(routeMatrix, 0); // Start from initial location
+      
+      return {
+        originalLocations: allLocations,
+        optimizedOrder: optimizedRoute,
+        optimizedLocations: optimizedRoute.map(index => allLocations[index]),
+        totalDistance: this.calculateTotalDistance(routeMatrix, optimizedRoute)
+      };
+    } catch (error) {
+      throw new Error(`Multi-destination route planning failed: ${error.message}`);
+    }
+  }
+
+  // Simple route optimization using nearest neighbor
+  optimizeRoute(distanceMatrix, startIndex = 0) {
+    const numLocations = distanceMatrix.length;
+    const visited = new Array(numLocations).fill(false);
+    const route = [startIndex];
+    visited[startIndex] = true;
+    
+    let currentLocation = startIndex;
+    
+    for (let i = 1; i < numLocations; i++) {
+      let nearestDistance = Infinity;
+      let nearestLocation = -1;
+      
+      for (let j = 0; j < numLocations; j++) {
+        if (!visited[j] && distanceMatrix[currentLocation][j] < nearestDistance) {
+          nearestDistance = distanceMatrix[currentLocation][j];
+          nearestLocation = j;
+        }
+      }
+      
+      if (nearestLocation !== -1) {
+        route.push(nearestLocation);
+        visited[nearestLocation] = true;
+        currentLocation = nearestLocation;
+      }
+    }
+    
+    return route;
+  }
+
+  // Calculate total distance for a route
+  calculateTotalDistance(distanceMatrix, route) {
+    let totalDistance = 0;
+    for (let i = 0; i < route.length - 1; i++) {
+      totalDistance += distanceMatrix[route[i]][route[i + 1]];
+    }
+    return Math.round(totalDistance * 100) / 100;
+  }
+
+  // Get hotels for multiple destinations
+  async getHotelsForDestinations(destinations, checkInDate, checkOutDate, adults = 1) {
+    try {
+      const hotelResults = [];
+      
+      for (const destination of destinations) {
+        if (destination.cityCode) {
+          const hotels = await this.searchHotels(
+            destination.cityCode,
+            checkInDate,
+            checkOutDate,
+            adults
+          );
+          
+          hotelResults.push({
+            destination: destination.name,
+            cityCode: destination.cityCode,
+            hotels: hotels.slice(0, 10) // Limit to top 10 hotels per destination
+          });
+        }
+      }
+      
+      return hotelResults;
+    } catch (error) {
+      throw new Error(`Multi-destination hotel search failed: ${error.message}`);
+    }
+  }
+
+  // Geocode multiple locations
+  async geocodeMultipleLocations(locations) {
+    try {
+      const geocodedLocations = [];
+      
+      for (const location of locations) {
+        if (typeof location === 'string') {
+          const geocoded = await this.geocode(location);
+          geocodedLocations.push({
+            name: location,
+            address: geocoded.display_name,
+            coordinates: {
+              lat: geocoded.lat,
+              lon: geocoded.lon
+            },
+            fullData: geocoded
+          });
+        } else if (location.name && !location.coordinates) {
+          const geocoded = await this.geocode(location.name);
+          geocodedLocations.push({
+            ...location,
+            address: geocoded.display_name,
+            coordinates: {
+              lat: geocoded.lat,
+              lon: geocoded.lon
+            },
+            fullData: geocoded
+          });
+        } else {
+          geocodedLocations.push(location);
+        }
+        
+        // Add delay to respect rate limits
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+      return geocodedLocations;
+    } catch (error) {
+      throw new Error(`Multiple location geocoding failed: ${error.message}`);
+    }
+  }
 }
 
 module.exports = new MapService();

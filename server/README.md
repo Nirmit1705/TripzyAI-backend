@@ -5,7 +5,9 @@ AI-powered trip planning backend service that generates personalized travel itin
 ## Features
 
 - User authentication and profile management
-- AI-powered itinerary generation
+- AI-powered itinerary generation with multi-destination support
+- Starting point and multiple destinations planning
+- Route optimization for multiple destinations
 - Real-time weather integration
 - Interactive AI agent for trip modifications
 - Hotel search and booking via Amadeus API
@@ -41,6 +43,10 @@ AI-powered trip planning backend service that generates personalized travel itin
 - `POST /register` - Register new user
 - `POST /login` - User login
 - `GET /profile` - Get user profile
+- `GET /trip-history` - Get user's past completed trips
+- `GET /current-trips` - Get user's current and upcoming trips
+- `GET /travel-stats` - Get user's travel statistics and analytics
+- `PUT /rate-trip/:id` - Rate and review a completed trip
 
 ### Itinerary Routes (`/api/itinerary`)
 - `POST /generate` - Generate new itinerary
@@ -59,6 +65,9 @@ AI-powered trip planning backend service that generates personalized travel itin
 - `GET /config` - Get map configuration
 - `GET /hotels` - Search hotels by city using Amadeus API
 - `GET /hotel-offers` - Get hotel offers and pricing
+- `POST /multi-destination-route` - Plan optimal route for multiple destinations
+- `POST /geocode-multiple` - Geocode multiple locations at once
+- `POST /multi-destination-hotels` - Get hotels for multiple destinations
 
 ## Environment Variables
 

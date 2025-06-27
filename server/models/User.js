@@ -19,6 +19,33 @@ const userSchema = mongoose.Schema({
     budget: String,
     travelStyle: String,
     interests: [String]
+  },
+  tripHistory: [{
+    itineraryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Itinerary'
+    },
+    title: String,
+    destinations: [String],
+    startDate: Date,
+    endDate: Date,
+    totalCost: Number,
+    status: {
+      type: String,
+      enum: ['completed', 'cancelled', 'ongoing'],
+      default: 'completed'
+    },
+  }],
+  travelStats: {
+    totalTrips: {
+      type: Number,
+      default: 0
+    },
+    totalDestinations: {
+      type: Number,
+      default: 0
+    },
+    lastTripDate: Date
   }
 }, {
   timestamps: true
