@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const locationSchema = {
+const locationSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true
@@ -12,7 +12,7 @@ const locationSchema = {
   },
   cityCode: String, // For Amadeus API
   country: String
-};
+}, { _id: false });
 
 const itinerarySchema = mongoose.Schema({
   user: {
@@ -25,7 +25,7 @@ const itinerarySchema = mongoose.Schema({
     required: true
   },
   startingPoint: {
-    ...locationSchema,
+    type: locationSchema,
     required: true
   },
   destinations: [locationSchema],
@@ -40,6 +40,16 @@ const itinerarySchema = mongoose.Schema({
   budget: {
     type: Number,
     required: true
+  },
+  currency: {
+    type: String,
+    default: 'USD',
+    uppercase: true
+  },
+  originalCurrency: {
+    type: String,
+    default: 'USD',
+    uppercase: true
   },
   days: [{
     day: Number,
@@ -56,6 +66,8 @@ const itinerarySchema = mongoose.Schema({
       activity: String,
       location: String,
       cost: Number,
+      originalCost: Number,
+      currency: String,
       notes: String,
       coordinates: {
         lat: Number,
@@ -66,6 +78,8 @@ const itinerarySchema = mongoose.Schema({
       name: String,
       address: String,
       cost: Number,
+      originalCost: Number,
+      currency: String,
       hotelId: String,
       coordinates: {
         lat: Number,
@@ -76,6 +90,8 @@ const itinerarySchema = mongoose.Schema({
       type: String, // breakfast, lunch, dinner
       restaurant: String,
       cost: Number,
+      originalCost: Number,
+      currency: String,
       coordinates: {
         lat: Number,
         lon: Number
@@ -86,6 +102,8 @@ const itinerarySchema = mongoose.Schema({
       to: String,
       mode: String, // flight, train, bus, car
       cost: Number,
+      originalCost: Number,
+      currency: String,
       duration: String,
       distance: Number
     }

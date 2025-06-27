@@ -6,7 +6,7 @@ const {
   calculateDistance,
   getMapConfig,
   searchHotels,
-  getHotelOffers,
+  getHotelDetails,
   planMultiDestinationRoute,
   geocodeMultipleLocations,
   getMultiDestinationHotels
@@ -44,10 +44,10 @@ router.get('/config', getMapConfig);
 // @access  Public
 router.get('/hotels', searchHotels);
 
-// @desc    Get hotel offers
-// @route   GET /api/map/hotel-offers
+// @desc    Get basic hotel details
+// @route   GET /api/map/hotel-details
 // @access  Public
-router.get('/hotel-offers', getHotelOffers);
+router.get('/hotel-details', getHotelDetails);
 
 // @desc    Plan route for multiple destinations
 // @route   POST /api/map/multi-destination-route

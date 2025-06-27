@@ -18,7 +18,12 @@ const userSchema = mongoose.Schema({
   preferences: {
     budget: String,
     travelStyle: String,
-    interests: [String]
+    interests: [String],
+    currency: {
+      type: String,
+      default: 'USD',
+      uppercase: true
+    }
   },
   tripHistory: [{
     itineraryId: {

@@ -107,26 +107,25 @@ const getMapConfig = asyncHandler(async (req, res) => {
 // @route   GET /api/map/hotels
 // @access  Public
 const searchHotels = asyncHandler(async (req, res) => {
-  const { cityCode, checkInDate, checkOutDate, adults, radius } = req.query;
+  const { cityCode, checkInDate, checkOutDate, adults, radius, currency } = req.query;
   
-  if (!cityCode || !checkInDate || !checkOutDate) {
+  if (!cityCode) {
     res.status(400);
-    throw new Error('cityCode, checkInDate, and checkOutDate are required');
+    throw new Error('cityCode is required');
   }
 
-  // Validate date format (YYYY-MM-DD)
-  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-  if (!dateRegex.test(checkInDate) || !dateRegex.test(checkOutDate)) {
-    res.status(400);
-    throw new Error('Dates must be in YYYY-MM-DD format');
-  }
+  // Default dates if not provided
+  const defaultCheckIn = checkInDate || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const defaultCheckOut = checkOutDate || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
   const hotels = await mapService.searchHotels(
     cityCode,
-    checkInDate,
-    checkOutDate,
+    defaultCheckIn,
+    defaultCheckOut,
     adults ? parseInt(adults) : 1,
-    radius ? parseInt(radius) : 5
+    radius ? parseInt(radius) : 5,
+    'KM',
+    currency ? currency.toUpperCase() : 'USD'
   );
   
   res.json({
@@ -135,50 +134,38 @@ const searchHotels = asyncHandler(async (req, res) => {
     count: hotels.length,
     searchParams: {
       cityCode,
-      checkInDate,
-      checkOutDate,
+      checkInDate: defaultCheckIn,
+      checkOutDate: defaultCheckOut,
       adults: adults ? parseInt(adults) : 1,
-      radius: radius ? parseInt(radius) : 5
+      radius: radius ? parseInt(radius) : 5,
+      currency: currency ? currency.toUpperCase() : 'USD'
     }
   });
 });
 
-// @desc    Get hotel offers
-// @route   GET /api/map/hotel-offers
+// @desc    Get basic hotel details
+// @route   GET /api/map/hotel-details
 // @access  Public
-const getHotelOffers = asyncHandler(async (req, res) => {
-  const { hotelIds, checkInDate, checkOutDate, adults, roomQuantity } = req.query;
+const getHotelDetails = asyncHandler(async (req, res) => {
+  const { hotelIds, currency } = req.query;
   
-  if (!hotelIds || !checkInDate || !checkOutDate) {
+  if (!hotelIds) {
     res.status(400);
-    throw new Error('hotelIds, checkInDate, and checkOutDate are required');
+    throw new Error('hotelIds are required');
   }
 
-  // Validate date format (YYYY-MM-DD)
-  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-  if (!dateRegex.test(checkInDate) || !dateRegex.test(checkOutDate)) {
-    res.status(400);
-    throw new Error('Dates must be in YYYY-MM-DD format');
-  }
-
-  const offers = await mapService.getHotelOffers(
+  const details = await mapService.getHotelDetails(
     hotelIds,
-    checkInDate,
-    checkOutDate,
-    adults ? parseInt(adults) : 1,
-    roomQuantity ? parseInt(roomQuantity) : 1
+    currency ? currency.toUpperCase() : 'USD'
   );
   
   res.json({
     success: true,
-    data: offers,
-    count: offers.length,
+    data: details,
+    count: details.length,
     searchParams: {
       hotelIds: Array.isArray(hotelIds) ? hotelIds : [hotelIds],
-      checkInDate,
-      checkOutDate,
-      adults: adults ? parseInt(adults) : 1,
-      roomQuantity: roomQuantity ? parseInt(roomQuantity) : 1
+      currency: currency ? currency.toUpperCase() : 'USD'
     }
   });
 });
@@ -246,7 +233,7 @@ const geocodeMultipleLocations = asyncHandler(async (req, res) => {
 // @route   POST /api/map/multi-destination-hotels
 // @access  Public
 const getMultiDestinationHotels = asyncHandler(async (req, res) => {
-  const { destinations, checkInDate, checkOutDate, adults } = req.body;
+  const { destinations, checkInDate, checkOutDate, adults, currency } = req.body;
   
   if (!destinations || !Array.isArray(destinations) || destinations.length === 0) {
     res.status(400);
@@ -269,7 +256,8 @@ const getMultiDestinationHotels = asyncHandler(async (req, res) => {
     destinations,
     checkInDate,
     checkOutDate,
-    adults ? parseInt(adults) : 1
+    adults ? parseInt(adults) : 1,
+    currency ? currency.toUpperCase() : 'USD'
   );
   
   res.json({
@@ -279,7 +267,8 @@ const getMultiDestinationHotels = asyncHandler(async (req, res) => {
       checkInDate,
       checkOutDate,
       adults: adults ? parseInt(adults) : 1,
-      destinationCount: destinations.length
+      destinationCount: destinations.length,
+      currency: currency ? currency.toUpperCase() : 'USD'
     }
   });
 });
@@ -291,7 +280,7 @@ module.exports = {
   calculateDistance,
   getMapConfig,
   searchHotels,
-  getHotelOffers,
+  getHotelDetails,
   planMultiDestinationRoute,
   geocodeMultipleLocations,
   getMultiDestinationHotels

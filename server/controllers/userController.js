@@ -8,24 +8,79 @@ const generateToken = require('../utils/generateToken');
 // @route   POST /api/user/register
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
-  // Implementation for user registration
-  res.status(201).json({ message: 'User registration endpoint' });
+  const { name, email, password } = req.body;
+
+  if (!name || !email || !password) {
+    res.status(400);
+    throw new Error('Please add all fields');
+  }
+
+  // Check if user exists
+  const userExists = await User.findOne({ email });
+
+  if (userExists) {
+    res.status(400);
+    throw new Error('User already exists');
+  }
+
+  // Create user
+  const user = await User.create({
+    name,
+    email,
+    password,
+    preferences: {
+      currency: 'USD'
+    }
+  });
+
+  if (user) {
+    res.status(201).json({
+      _id: user.id,
+      name: user.name,
+      email: user.email,
+      preferences: user.preferences,
+      token: generateToken(user._id),
+    });
+  } else {
+    res.status(400);
+    throw new Error('Invalid user data');
+  }
 });
 
 // @desc    Authenticate user & get token
 // @route   POST /api/user/login
 // @access  Public
 const loginUser = asyncHandler(async (req, res) => {
-  // Implementation for user login
-  res.status(200).json({ message: 'User login endpoint' });
+  const { email, password } = req.body;
+
+  // Check for user email
+  const user = await User.findOne({ email });
+
+  if (user && (await user.matchPassword(password))) {
+    res.json({
+      _id: user.id,
+      name: user.name,
+      email: user.email,
+      preferences: user.preferences,
+      token: generateToken(user._id),
+    });
+  } else {
+    res.status(400);
+    throw new Error('Invalid credentials');
+  }
 });
 
 // @desc    Get user profile
 // @route   GET /api/user/profile
 // @access  Private
 const getUserProfile = asyncHandler(async (req, res) => {
-  // Implementation for getting user profile
-  res.status(200).json({ message: 'User profile endpoint' });
+  res.json({
+    _id: req.user._id,
+    name: req.user.name,
+    email: req.user.email,
+    preferences: req.user.preferences,
+    travelStats: req.user.travelStats
+  });
 });
 
 // @desc    Get user's trip history (past trips only)
